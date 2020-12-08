@@ -1,0 +1,131 @@
+
+trigger:
+    branches:
+        include:
+            - deploy
+    
+variables:
+    DOCKER_BUILDKIT: 1
+    configuration.application.image: 'books-api'
+    configuration.pool.vmImage: 'ubuntu-latest'
+    configuration.path.security.test: $(System.DefaultWorkingDirectory)/security
+    configuration.buildTag: $(Build.BuildNumber)
+    configuration.containerRegistry.domain: acrbooks.azurecr.io
+    configuration.containerRegistry.service.connection: 'ACR_Azure'
+    configuration.image.secret: 7d3f1c8b-68ea-4bb6-bb12-755de9d69f61-auth
+    configuration.kubernetes.service.connection: 'API_Books'
+
+stages:
+    - stage: Build
+      displayName: Build stage
+      jobs:
+          - job: build_job
+            displayName: '[BUILD] API Books DevOps Pipeline'
+            pool:
+                vmImage: $(configuration.pool.vmImage)
+                workspace:
+                    clean: all
+            steps:
+                - task: Maven@3
+                  enabled: true
+                  displayName: 'Compile and Build'
+                  inputs:
+                      mavenPomFile: 'pom.xml'
+                      goals: 'package -DskipTests'
+                      publishJUnitResults: false
+                      javaHomeOption: 'JDKVersion'
+                      jdkVersionOption: '1.11'
+                      mavenVersionOption: 'Default'
+                      mavenOptions: '-Xmx3072m'
+                      mavenAuthenticateFeed: false
+                      effectivePomSkip: false
+                      sonarQubeRunAnalysis: false
+
+                - task: Maven@3
+                  enabled: true
+                  displayName: '[TEST] Executing Tests'
+                  inputs:
+                      mavenPomFile: 'pom.xml'
+                      goals: 'test'
+                      publishJUnitResults: false
+                      javaHomeOption: 'JDKVersion'
+                      jdkVersionOption: '1.11'
+                      mavenVersionOption: 'Default'
+                      mavenOptions: '-Xmx3072m'
+                      mavenAuthenticateFeed: false
+                      effectivePomSkip: false
+                      sonarQubeRunAnalysis: false
+
+                - task: Maven@3
+                  enabled: false
+                  displayName: '[CODE QUALITY] Executing SonarQube'
+                  inputs:
+                      mavenPomFile: 'pom.xml'
+                      goals: 'clean package sonar:sonar -Psonar'
+                      publishJUnitResults: false
+                      javaHomeOption: 'JDKVersion'
+                      jdkVersionOption: '1.11'
+                      mavenVersionOption: 'Default'
+                      mavenOptions: '-Xmx3072m'
+                      mavenAuthenticateFeed: false
+                      effectivePomSkip: false
+                      sonarQubeRunAnalysis: false
+                
+                - task: Docker@2
+                  enabled: true
+                  displayName: "[DOCKER IMAGE] Creating Image"
+                  inputs:
+                    command: build
+                    Dockerfile: './Dockerfile'
+                    buildContext: '.'
+                    arguments: '-t  $(configuration.containerRegistry.domain)/$(configuration.application.image):$(configuration.buildTag)'
+
+                - task: Docker@2
+                  enabled: true
+                  displayName: '[DOCKER] Push Application Image To ACR'
+                  inputs:
+                    containerRegistry: $(configuration.containerRegistry.service.connection)
+                    repository: $(configuration.application.image)
+                    command: push
+                    tags: $(configuration.buildTag)
+
+                - task: PublishBuildArtifacts@1
+                  enabled: true
+                  displayName: '[K8S] Uploading configs of k8s'
+                  inputs:
+                    pathToPublish: '$(System.DefaultWorkingDirectory)/k8s'
+                    artifactName: 'k8s'
+
+    - stage: Deploy
+      displayName: Deploy stage
+      dependsOn: Build
+      jobs:
+          - deployment: Deploy
+            displayName: Deploy
+            pool:
+                vmImage: $(configuration.pool.vmImage)
+            environment: 'books-dev'
+            strategy:
+                runOnce:
+                    deploy:
+                        steps:
+                            - task: KubernetesManifest@0
+                              displayName: Create imagePullSecret
+                              inputs:
+                                  action: createSecret
+                                  secretName: $(configuration.image.secret)
+                                  dockerRegistryEndpoint: $(configuration.containerRegistry.service.connection)
+                                  kubernetesServiceConnection: $(configuration.kubernetes.service.connection)
+
+
+                            - task: KubernetesManifest@0
+                              displayName: Deploy to Kubernetes cluster
+                              inputs:
+                                  action: deploy
+                                  manifests: |
+                                      $(Pipeline.Workspace)/k8s/deployment.yaml
+                                  kubernetesServiceConnection: $(configuration.kubernetes.service.connection)
+                                  imagePullSecrets: |
+                                      $(configuration.image.secret)
+                                  containers: |
+                                      $(configuration.containerRegistry.domain)/$(configuration.application.image):$(configuration.buildTag)

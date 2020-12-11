@@ -2,7 +2,7 @@
 trigger:
     branches:
         include:
-            - deploy
+            - develop
     
 variables:
     DOCKER_BUILDKIT: 1

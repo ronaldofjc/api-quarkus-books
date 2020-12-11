@@ -45,5 +45,27 @@ The application is now runnable using `java -jar target/books-1.0.0-SNAPSHOT-run
 - The generated swagger html page is available in the following address
     `http://localhost:8080/swagger-ui`
 
-    
+## Terraform
 
+- Terraform ([Install](https://learn.hashicorp.com/tutorials/terraform/install-cli "Install"))
+
+- Initialize directory
+```shell script
+  cd terraform/
+  terraform init
+```
+
+- Execution plan
+```shell script
+  terraform plan
+```
+
+- Apply configuration
+```shell script
+  terraform apply
+```
+
+- Destroy infraestructure
+```shell script
+  terraform destroy
+```

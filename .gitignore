@@ -34,3 +34,8 @@ nb-configuration.xml
 # patch
 *.orig
 *.rej
+
+# terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate*

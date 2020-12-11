@@ -1,9 +1,9 @@
-# Location
+# LOCATION
 variable "location" {
   default = "eastus"
 }
 
-# Resource Group
+# RESOURCE GROUP
 variable "resource_group_name" {
   default = "rg-books"
 }
@@ -23,28 +23,32 @@ variable "aks_cluster_name" {
   default     = "aksbooks"
 }
 
-variable "dns_prefix" {
+variable "aks_dns_prefix" {
     default = "aks1"
 }
 
-variable "default_node_pool_name" {
+variable "aks_default_node_pool_name" {
     default = "default"
 }
 
-variable "node_count" {
+variable "aks_node_count" {
     default = 1
 }
 
-variable "vm_size" {
+variable "aks_vm_size" {
     default = "Standard_B2s"
 }
 
-# Cosmos
+variable "aks_identity_type" {
+    default = "SystemAssigned"
+}
+
+# COSMOS
 variable "cosmos_account_name" {
   default = "accbooks"
 }
 
-variable "offer_type" {
+variable "cosmos_offer_type" {
   default = "Standard"
 }
 
@@ -56,21 +60,26 @@ variable "cosmos_db_throughput" {
   default = 400
 }
 
-variable "consistency_level" {
+variable "cosmos_consistency_level" {
   default = "BoundedStaleness"
 }
 
-variable "max_interval_in_seconds" {
+variable "cosmos_max_interval_in_seconds" {
   default = 10
 }
 
-variable "max_staleness_prefix" {
+variable "cosmos_max_staleness_prefix" {
   default = 200
 }
 
-variable "failover_priority" {
+variable "cosmos_failover_priority" {
   default = 0
 }
 
+variable "cosmos_account_kind" {
+  default = "MongoDB"
+}
 
-
+variable "cosmos_account_capabilities_name" {
+  default = "EnableMongo"
+}

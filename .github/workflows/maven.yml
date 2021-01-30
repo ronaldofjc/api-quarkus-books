@@ -1,0 +1,33 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  pull_request:
+    branches: [ github ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Setup Java 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+        
+    - name: Build and Test
+      run: mvn clean install
+      
+    - name: Upload Maven build artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: artifact
+        path: github-actions-java-maven/target/github-actions-java-maven.jar
+        
+    
+        path: github-actions-java-maven/target/github-actions-java-maven.jar  
+      run: mvn -B package --file pom.xml

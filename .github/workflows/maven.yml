@@ -22,12 +22,5 @@ jobs:
     - name: Build and Test
       run: mvn clean install
       
-    - name: Upload Maven build artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: artifact
-        path: github-actions-java-maven/target/github-actions-java-maven.jar
         
     
-        path: github-actions-java-maven/target/github-actions-java-maven.jar  
-      run: mvn -B package --file pom.xml
